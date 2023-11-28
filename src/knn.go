@@ -174,7 +174,12 @@ func kNNRegressor(x [][]float64, y []float64, target []float64, k int, distType 
 		distSum := 0.0
 		// scale the impact based on the distance (closer equals higher impact)
 		for ci, i := range nnYs {
-			weight := 1 / nnDists[ci]
+			weight := 0.0
+			if nnDists[ci] <= float64EqualityThreshold {
+				weight = 1
+			} else {
+				weight = 1 / nnDists[ci]
+			}
 			distSum += weight
 			result += i * weight
 		}
@@ -241,7 +246,12 @@ func kNNClassifier(x [][]float64, y []int, target []float64, k int, distType str
 		distSum := 0.0
 		// scale the impact based on the distance (closer equals higher impact)
 		for ci, i := range nnYs {
-			weight := 1 / nnDists[ci]
+			weight := 0.0
+			if nnDists[ci] == 0 {
+				weight = 1
+			} else {
+				weight = 1 / nnDists[ci]
+			}
 			distSum += weight
 			resultClasses[i] += weight
 		}
