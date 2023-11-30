@@ -135,41 +135,45 @@ Random forest regressor
 			-	euclidean
 			-	manhattan
 			-	hamming
+			-	braycurtis
 		*	scaleDist: whether to scale the prediction based on the distance of samples to the target
 	:return
 		*	result: regression result
 		*	sortedDistIdx: slice with indices sorting the distances/ values from small to big
 		*	dists: distances to all samples in x
 */
-func kNNRegressor(x [][]float64, y []float64, target []float64, k int, distType string, scaleDist bool) (float64, []int, []float64) {
+func kNNRegressor(x [][]float64, y []float64, target []float64, k *int, distType *string, scaleDist *bool) (float64, []int, []float64) {
 	if xSize, ySize := len(x), len(y); xSize != ySize {
 		log.Fatal(fmt.Printf("Size of x [%d] not equal to size of y [%d]", xSize, ySize))
 	}
 	// calc distance
 	dists := []float64{}
-	if distType == "euclidean" {
-		dists = append(dists, euclideanDist(x, target)...)
-	} else if distType == "manhattan" {
+	switch *distType {
+	case "manhattan":
 		dists = append(dists, manhattanDist(x, target)...)
-	} else if distType == "hamming" {
+	case "hamming":
 		dists = append(dists, hammingDist(x, target)...)
-	} else {
-		log.Fatal(fmt.Printf("Distance metirc [%s] not implemented", distType))
+	case "braycurtis":
+		dists = append(dists, braycurtisDiss(x, target)...)
+	case "euclidean":
+		dists = append(dists, euclideanDist(x, target)...)
+	default:
+		fmt.Printf("Using default distance metric ['euclidean'] instead of the not implementd ['%s']", *distType)
 	}
 	// sort distances small to big
 	sortedDistIdx := argsort(dists)
 	// nearest neighbours y values
-	nnYs := make([]float64, k)
+	nnYs := make([]float64, *k)
 	// nearest neighbours distances
-	nnDists := make([]float64, k)
-	for i := 0; i < k; i++ {
+	nnDists := make([]float64, *k)
+	for i := 0; i < *k; i++ {
 		nnYs[i] = y[sortedDistIdx[i]]
 		nnDists[i] = dists[sortedDistIdx[i]]
 	}
 
 	// calculate the result
 	result := 0.0
-	if scaleDist {
+	if *scaleDist {
 		// sum of distances of the k neighbours
 		distSum := 0.0
 		// scale the impact based on the distance (closer equals higher impact)
@@ -188,7 +192,7 @@ func kNNRegressor(x [][]float64, y []float64, target []float64, k int, distType 
 		for _, i := range nnYs {
 			result += i
 		}
-		result = result / float64(k)
+		result = result / float64(*k)
 	}
 	return result, sortedDistIdx, dists
 }
@@ -205,6 +209,7 @@ Random forest classifier
 			-	euclidean
 			-	manhattan
 			-	hamming
+			-	braycurtis
 		*	scaleDist: whether to scale the prediction based on the distance of samples to the target
 	:return
 		*	result: regression result
@@ -212,36 +217,39 @@ Random forest classifier
 		*	dists: distances to all samples in x
 		*	resultClasses: percentages for all classes
 */
-func kNNClassifier(x [][]float64, y []int, target []float64, k int, distType string, scaleDist bool) (int, []int, []float64, map[int]float64) {
+func kNNClassifier(x [][]float64, y []int, target []float64, k *int, distType *string, scaleDist *bool) (int, []int, []float64, map[int]float64) {
 	if xSize, ySize := len(x), len(y); xSize != ySize {
 		log.Fatal(fmt.Printf("Size of x [%d] not equal to size of y [%d]", xSize, ySize))
 	}
 	// calc distance
 	dists := []float64{}
-	if distType == "euclidean" {
-		dists = append(dists, euclideanDist(x, target)...)
-	} else if distType == "manhattan" {
+	switch *distType {
+	case "manhattan":
 		dists = append(dists, manhattanDist(x, target)...)
-	} else if distType == "hamming" {
+	case "hamming":
 		dists = append(dists, hammingDist(x, target)...)
-	} else {
-		log.Fatal(fmt.Printf("Distance metirc [%s] not implemented", distType))
+	case "braycurtis":
+		dists = append(dists, braycurtisDiss(x, target)...)
+	case "euclidean":
+		dists = append(dists, euclideanDist(x, target)...)
+	default:
+		fmt.Printf("Using default distance metric ['euclidean'] instead of the not implementd ['%s']", *distType)
 	}
 	// sort distances small to big
 	sortedDistIdx := argsort(dists)
 	// nearest neighbours y values
-	nnYs := make([]int, k)
+	nnYs := make([]int, *k)
 	// nearest neighbours distances
-	nnDists := make([]float64, k)
-	for i := 0; i < k; i++ {
+	nnDists := make([]float64, *k)
+	for i := 0; i < *k; i++ {
 		nnYs[i] = y[sortedDistIdx[i]]
 		nnDists[i] = dists[sortedDistIdx[i]]
 	}
 
 	// calculate the result
 	resultClasses := make(map[int]float64)
-	fractSample := 1 / float64(k)
-	if scaleDist {
+	fractSample := 1 / float64(*k)
+	if *scaleDist {
 		// sum of distances of the k neighbours
 		distSum := 0.0
 		// scale the impact based on the distance (closer equals higher impact)
