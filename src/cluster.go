@@ -1,9 +1,9 @@
 package main
 
 import (
-	"math"
-	"log"
 	"fmt"
+	"log"
+	"math"
 )
 
 /*
@@ -27,11 +27,12 @@ func centroid(inSlice [][]float64) []float64 {
 
 /*
 finde the index of the smallest non- zero element in a slice
+
 	:parameter
 		*	inSlice: the slice to search in
 	:return
 		*	minIdx: index of the smallest non-zero element in the slice
- */
+*/
 func argminNonZeroFloat(inSlice []float64) int {
 	minIdx := 0
 	minVal := inSlice[0]
@@ -123,6 +124,7 @@ func hierachicalClustering(inSlice [][]float64, distType *string, maxIter *int, 
 
 /*
 calculate the average correlation between two clusters
+
 	:parameter
 		*	inSlice: slice with data of features
 		*	cluster1, cluster2: indices of feature in the same cluster
@@ -139,7 +141,7 @@ func ClusterCorrelation(inSlice [][]float64, cluster1, cluster2 []int) float64 {
 				if err != nil {
 					log.Fatal(fmt.Print("ClusterCorrelation couldn't be calculated", err))
 				}
-				totalCorr+=math.Abs(interCorr)
+				totalCorr += math.Abs(interCorr)
 				clusterMembers++
 			}
 		}
@@ -173,12 +175,12 @@ func hierarchicalCorrelationClustering(inSlice [][]float64, maxIter *int, minCor
 		partner2 := 0
 		for ci, i := range cluster {
 			for cj, j := range cluster {
-				if mCorr := ClusterCorrelation(inSlice, i, j); mCorr > maxCorr && ci != cj{
+				if mCorr := ClusterCorrelation(inSlice, i, j); mCorr > maxCorr && ci != cj {
 					maxCorr = mCorr
 					partner1 = ci
 					partner2 = cj
 				}
-			}	
+			}
 		}
 		if partner1 > 0 || partner2 > 0 {
 			// merge cluster
@@ -192,6 +194,6 @@ func hierarchicalCorrelationClustering(inSlice [][]float64, maxIter *int, minCor
 		}
 		prevClusterNum = len(cluster)
 		interCount++
-	}	
+	}
 	return cluster
 }

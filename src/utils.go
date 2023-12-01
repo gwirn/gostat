@@ -1,10 +1,78 @@
 package main
 
 import (
-	"errors"
+	"encoding/csv"
 	"fmt"
+	"log"
 	"math"
+	"math/rand"
+	"os"
 )
+
+/*
+Shuffle data set in place
+
+	:parameter
+		* featureSlice: features describing the data
+		* labelSlice: labels for the data
+	:return
+		None
+*/
+func shuffleDatasetFloatString(featureSlice [][]float64, labelSlice []int) {
+	fSize := len(featureSlice)
+	lSize := len(labelSlice)
+	if fSize != lSize {
+		log.Fatal(fmt.Printf("Prediction size [%d] doesn't match the ground truth size [%d]", fSize, lSize))
+	}
+	rand.Shuffle(fSize, func(i, j int) {
+		featureSlice[i], featureSlice[j] = featureSlice[j], featureSlice[i]
+		labelSlice[i], labelSlice[j] = labelSlice[j], labelSlice[i]
+	})
+}
+
+/*
+Test whether a string is in inSlice or not
+
+	:parameter
+		* inSlice: the slice to be tested
+		* target: the string to be tested whether it is in inSlice or not
+	:retun
+		* isin: true if target is in inSlice
+*/
+func isinString(inSlice []string, target string) bool {
+	isin := false
+	for _, i := range inSlice {
+		if i == target {
+			isin = true
+			break
+		}
+	}
+	return isin
+}
+
+/*
+Helper function to read csv file
+
+	:parameter
+		* filePath: path to the csv file to be read
+	:return
+		* records: lines of the csv file
+*/
+func readCsvFile(filePath string) [][]string {
+	f, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal("Unable to read input file "+filePath, err)
+	}
+	defer f.Close()
+
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		log.Fatal("Unable to parse file as CSV for "+filePath, err)
+	}
+
+	return records
+}
 
 /*
 Creates a scaler to scale individual features to be in the range between 0 an 1
@@ -16,7 +84,7 @@ Creates a scaler to scale individual features to be in the range between 0 an 1
 */
 func minMaxScaler(inSlice [][]float64) func([][]float64) {
 	vectorSize := len(inSlice[0])
-	// storage for the min and max values for each feature (column) 
+	// storage for the min and max values for each feature (column)
 	minVals := make([]float64, vectorSize)
 	maxVals := make([]float64, vectorSize)
 	for ci, i := range inSlice[0] {
@@ -37,37 +105,4 @@ func minMaxScaler(inSlice [][]float64) func([][]float64) {
 			}
 		}
 	}
-}
-
-/*
-Calculate the correlation coefficient for two (colIndX and colIndX) columns in inSlice
-
-	:parameter
-		*	inSlice: slice containing the data
-		*	colIndX, colIndX: indices (zero indexed) of the columns for which the correlation should be computed
-	:return
-		*	corr: correlation coefficient between data in column colIndX and colIndY
-*/
-func corrCoef(inSlice [][]float64, colIndX, colIndY *int) (float64, error) {
-	n := float64(len((inSlice)))
-	sumX := 0.0
-	sumY := 0.0
-	sumXY := 0.0
-	squareSumX := 0.0
-	squareSumY := 0.0
-
-	for _, i := range inSlice {
-		Xi := i[*colIndX]
-		Yi := i[*colIndY]
-		sumX += Xi
-		sumY += Yi
-		sumXY += Xi * Yi
-		squareSumX += Xi * Xi
-		squareSumY += Yi * Yi
-	}
-	corr := (n*sumXY - sumX*sumY) / (math.Sqrt((n*squareSumX - sumX*sumX) * (n*squareSumY - sumY*sumY)))
-	if math.IsNaN(corr) {
-		return 0.0, errors.New(fmt.Sprintf("Couldn't calculate correlation between feature [%d] and [%d]", colIndX, colIndY))
-	}
-	return corr, nil
 }
