@@ -158,7 +158,8 @@ func kNNRegressor(x [][]float64, y []float64, target []float64, k *int, distType
 	case "euclidean":
 		dists = append(dists, euclideanDist(x, target)...)
 	default:
-		fmt.Printf("Using default distance metric ['euclidean'] instead of the not implementd ['%s']", *distType)
+		dists = append(dists, euclideanDist(x, target)...)
+		fmt.Printf("Using default distance metric ['euclidean'] instead of the not implementd ['%s']\n", *distType)
 	}
 	// sort distances small to big
 	sortedDistIdx := argsort(dists)
@@ -219,7 +220,7 @@ Random forest classifier
 */
 func kNNClassifier(x [][]float64, y []int, target []float64, k *int, distType *string, scaleDist *bool) (int, []int, []float64, map[int]float64) {
 	if xSize, ySize := len(x), len(y); xSize != ySize {
-		log.Fatal(fmt.Printf("Size of x [%d] not equal to size of y [%d]", xSize, ySize))
+		log.Fatal(fmt.Printf("Size of x [%d] not equal to size of y [%d]\n", xSize, ySize))
 	}
 	// calc distance
 	dists := []float64{}
@@ -233,7 +234,8 @@ func kNNClassifier(x [][]float64, y []int, target []float64, k *int, distType *s
 	case "euclidean":
 		dists = append(dists, euclideanDist(x, target)...)
 	default:
-		fmt.Printf("Using default distance metric ['euclidean'] instead of the not implementd ['%s']", *distType)
+		dists = append(dists, euclideanDist(x, target)...)
+		fmt.Printf("Using default distance metric ['euclidean'] instead of the not implementd ['%s']\n", *distType)
 	}
 	// sort distances small to big
 	sortedDistIdx := argsort(dists)
@@ -248,7 +250,6 @@ func kNNClassifier(x [][]float64, y []int, target []float64, k *int, distType *s
 
 	// calculate the result
 	resultClasses := make(map[int]float64)
-	fractSample := 1 / float64(*k)
 	if *scaleDist {
 		// sum of distances of the k neighbours
 		distSum := 0.0
@@ -267,6 +268,8 @@ func kNNClassifier(x [][]float64, y []int, target []float64, k *int, distType *s
 			resultClasses[ci] = resultClasses[ci] / distSum
 		}
 	} else {
+		// add a fraction per sample to its class
+		fractSample := 1 / float64(*k)
 		for _, i := range nnYs {
 			resultClasses[i] += fractSample
 		}
