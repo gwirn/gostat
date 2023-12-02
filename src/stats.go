@@ -41,7 +41,7 @@ func corrCoef(inSlice [][]float64, colIndX, colIndY *int) (float64, error) {
 }
 
 /*
-Calculate the multiclass accuracy between prediction and ground truth
+Calculate the multi class accuracy between prediction and ground truth
 
 	:parameter
 		* prediction: predicted labels as returned by a classifier
@@ -53,7 +53,7 @@ func multiclassAccuracy(prediction, groundTruth []int) float64 {
 	pSize := len(prediction)
 	gTSize := len(groundTruth)
 	if pSize != gTSize {
-		log.Fatal(fmt.Printf("Prediction size [%d] doesn't match the ground truth size [%d]", pSize, gTSize))
+		log.Fatal(fmt.Printf("Prediction size [%d] doesn't match the ground truth size [%d]\n", pSize, gTSize))
 	}
 	correctClassification := 0
 	for i := 0; i < pSize; i++ {
@@ -63,4 +63,48 @@ func multiclassAccuracy(prediction, groundTruth []int) float64 {
 	}
 	acc := float64(correctClassification) / float64(pSize)
 	return acc
+}
+
+/*
+Calculate the mean absolute error
+
+	:parameter
+		* prediction: predicted labels as returned by a classifier
+		* groundTruth: ground truth (correct) labels
+	:return
+		* mae: mean absolute error
+*/
+func mae(prediction, groundTruth []float64) *float64 {
+	pSize := len(prediction)
+	if gTSize := len(groundTruth); pSize != gTSize {
+		log.Fatal(fmt.Printf("Prediction size [%d] doesn't match the ground truth size [%d]\n", pSize, gTSize))
+	}
+	sumError := 0.0
+	for i := 0; i < pSize; i++ {
+		sumError += math.Abs(prediction[i] - groundTruth[i])
+	}
+	mae := sumError / float64(pSize)
+	return &mae
+}
+
+/*
+Calculate the mean squared error
+
+	:parameter
+		* prediction: predicted labels as returned by a classifier
+		* groundTruth: ground truth (correct) labels
+	:return
+		* mse: mean squared error
+*/
+func mse(prediction, groundTruth []float64) *float64 {
+	pSize := len(prediction)
+	if gTSize := len(groundTruth); pSize != gTSize {
+		log.Fatal(fmt.Printf("Prediction size [%d] doesn't match the ground truth size [%d]\n", pSize, gTSize))
+	}
+	sumError := 0.0
+	for i := 0; i < pSize; i++ {
+		sumError += math.Pow(prediction[i]-groundTruth[i], 2)
+	}
+	mae := sumError / float64(pSize)
+	return &mae
 }

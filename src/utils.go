@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strconv"
 )
 
 /*
@@ -105,4 +106,83 @@ func minMaxScaler(inSlice [][]float64) func([][]float64) {
 			}
 		}
 	}
+}
+/*
+Generate training data from a give csv file and scale it 
+	:parameter
+		* filePath: path to the file 
+		* testFrac: how much of the data should be used for testing (between 0 and 1)
+		* catConv: true to convert categorical data to integer labels for the labels - not needed when labels are already integers in the csv
+	:return
+		* trainDSFeatures: training features
+		* trainDSLabel: training labels
+		* testDSFeatures: test features
+		* testDSLabel: test labels
+		* labelMap: map to convert that was used to convert string labels to int labels
+		* &scaler: the scaler function used to scale the data
+		*/
+func genTrainTestData(filePath *string, testFrac *float64, catConv *bool) ([][]float64, []int, [][]float64, []int, map[string]int, *func([][]float64)) {
+	// read raw csv
+	lines := readCsvFile(*filePath)
+	// number of lines in the csv
+	numLines := len(lines)
+	// number of entries in the line
+	lineSize := len(lines[0])
+	// number of features per sample
+	numFeatures := lineSize -1
+	// stored labels
+	labels := make([]string, numLines)
+	uniqueLabels := []string{}
+	// stored feature vector
+	features := make([][]float64, numLines)
+	for ci, i := range lines {
+		// converted features if line i
+		lineConv := make([]float64, numFeatures)
+		for j := 0; j < lineSize; j++ {
+			if j == 0 {
+				// add to labels
+				labels[ci] = i[j]
+				if !isinString(uniqueLabels, i[j]) {
+					uniqueLabels = append(uniqueLabels, i[j])
+				}
+			} else {
+				// convert all feature vector entries to float
+				convFloat, err := strconv.ParseFloat(i[j], 64)
+				if err != nil {
+					log.Fatal(fmt.Sprintf("Couldn't convert [%s] at line [%d] to float64\n", i[j], ci), err)
+				}
+				lineConv[j-1] = convFloat
+			}
+		}
+		features[ci] = lineConv
+	}
+	// map to change string labels to int
+	labelMap := make(map[string]int)
+	for ci, i := range uniqueLabels {
+		if *catConv {
+			labelMap[i] = ci
+		} else {
+			// if labels are already integers in the csv
+			iConv, err := strconv.Atoi(i)
+			if err != nil {
+				log.Fatal(fmt.Sprintf("Couldn't convert [%s] to int\n", i), err)
+			}
+			labelMap[i] = iConv
+		}
+	}
+	// change string labels to int labels
+	labelsInt := make([]int, numLines)
+	for ci, i := range labels {
+		labelsInt[ci] = labelMap[i]
+	}
+	// scale all features to be within 0, 1
+	scaler := minMaxScaler(features)
+	scaler(features)
+	// randomly shuffle the dataset
+	shuffleDatasetFloatString(features, labelsInt)
+	// split the dataset
+	border := int(float64(numLines) * *testFrac)
+	trainDSFeatures, trainDSLabel := features[:border], labelsInt[:border]
+	testDSFeatures, testDSLabel := features[border:], labelsInt[border:]
+	return trainDSFeatures, trainDSLabel, testDSFeatures, testDSLabel, labelMap, &scaler
 }
