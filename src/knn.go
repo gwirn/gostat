@@ -218,7 +218,7 @@ Random forest classifier
 		*	dists: distances to all samples in x
 		*	resultClasses: percentages for all classes
 */
-func kNNClassifier(x [][]float64, y []int, target []float64, k *int, distType *string, scaleDist *bool) (int, []int, []float64, map[int]float64) {
+func kNNClassifier(x [][]float64, y []int, target []float64, k *int, distType *string, scaleDist *bool) (*int, []int, []float64, map[int]float64) {
 	if xSize, ySize := len(x), len(y); xSize != ySize {
 		log.Fatal(fmt.Printf("Size of x [%d] not equal to size of y [%d]\n", xSize, ySize))
 	}
@@ -283,5 +283,5 @@ func kNNClassifier(x [][]float64, y []int, target []float64, k *int, distType *s
 			resultPercent = value
 		}
 	}
-	return result, sortedDistIdx, dists, resultClasses
+	return &result, sortedDistIdx, dists, resultClasses
 }
