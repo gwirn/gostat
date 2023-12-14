@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math"
 )
 
@@ -43,6 +42,46 @@ func argminNonZeroFloat(inSlice []float64) int {
 		}
 	}
 	return minIdx
+}
+
+/*
+Find the member of the cluster that has the highest correlation to all other members
+	:parameter
+		* inSlice: slice with data of all clusters
+		* clusterMembers: (column) indices of inSlice that are in the same cluster
+	:return
+		* representative: clusterMembers member with the highest correlation to all others
+*/
+func findRepresentativeForCluster(inSlice[][]float64, clusterMembers []int) *int {
+	// number of members in the cluster
+	dim := len(clusterMembers)	
+	// all correlations of all against all cluster members
+	corrMat := make([][]float64, dim)
+	for i := range corrMat {
+		corrMat[i] = make([]float64, dim)
+	}
+	representative := -1
+	representerCorrSum := 0.0
+	for ci, i := range clusterMembers {
+		for cj, j := range clusterMembers[ci:] {
+			cj = cj + ci
+			if ci == cj {
+				// same entries have a correlation of 1
+				corrMat[ci][cj] = 1.
+			} else {
+				// calculate correlation between clusterMembers[ci] and clusterMembers[cj]
+				iCorr := math.Abs(corrCoef(inSlice, &i, &j))
+				corrMat[ci][cj] = iCorr 
+				corrMat[cj][ci] =  iCorr
+			}
+		}
+		// calculate the sum of all correlations
+		if repSum := sumFloat64(corrMat[ci]); *repSum > representerCorrSum {
+			representerCorrSum = *repSum
+			representative = i
+		}
+	}
+	return &representative
 }
 
 /*
@@ -137,10 +176,7 @@ func ClusterCorrelation(inSlice [][]float64, cluster1, cluster2 []int) float64 {
 	for _, i := range cluster1 {
 		for _, j := range cluster2 {
 			if i != j {
-				interCorr, err := corrCoef(inSlice, &i, &j)
-				if err != nil {
-					log.Fatal(fmt.Print("ClusterCorrelation couldn't be calculated", err))
-				}
+				interCorr := corrCoef(inSlice, &i, &j)
 				totalCorr += math.Abs(interCorr)
 				clusterMembers++
 			}
@@ -181,6 +217,9 @@ func hierarchicalCorrelationClustering(inSlice [][]float64, maxIter *int, minCor
 					partner2 = cj
 				}
 			}
+		}
+		if maxCorr < *minCorr {
+			break
 		}
 		if partner1 > 0 || partner2 > 0 {
 			// merge cluster
